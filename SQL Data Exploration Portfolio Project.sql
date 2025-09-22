@@ -35,7 +35,7 @@ ORDER BY payment_count DESC;
 
 SELECT
   c.customer_city,
-  ROUND(AVG(julianday(o.order_delivered_customer_date) - julianday(o.order_purchase_timestamp)), 2) AS avg_delivery_days,
+  ROUND(AVG(DATEDIFF(day,o.order_purchase_timestamp,o.order_delivered_customer_date)), 2) AS avg_delivery_days,
   COUNT(*) AS total_orders
 FROM orders o
 JOIN customers c ON o.customer_id = c.customer_id
@@ -48,7 +48,7 @@ ORDER BY avg_delivery_days DESC;
 SELECT
   oi.seller_id,s.seller_city,
   ROUND(AVG(r.review_score), 2) AS avg_review_score,
-  ROUND(AVG(julianday(o.order_delivered_customer_date) - julianday(o.order_purchase_timestamp)), 2) AS avg_delivery_days,
+  ROUND(AVG(DATEDIFF(day,o.order_purchase_timestamp,o.order_delivered_customer_date)), 2) AS avg_delivery_days,
   COUNT(DISTINCT o.order_id) AS total_orders
 FROM orders o
 JOIN order_reviews r ON o.order_id = r.order_id
@@ -80,8 +80,8 @@ FROM customer_order_counts;
 
 SELECT
   CASE
-    WHEN julianday(o.order_delivered_customer_date) - julianday(o.order_estimated_delivery_date) > 7 THEN 'More than 7 days Late'
-    WHEN julianday(o.order_delivered_customer_date) - julianday(o.order_estimated_delivery_date) BETWEEN 0 AND 7 THEN 'Less than 7 days Late'
+    WHEN DATEDIFF(day,o.order_estimated_delivery_date,o.order_delivered_customer_date) > 7 THEN 'More than 7 days Late'
+    WHEN DATEDIFF(day,o.order_estimated_delivery_date,o.order_delivered_customer_date) BETWEEN 0 AND 7 THEN 'Less than 7 days Late'
     WHEN o.order_delivered_customer_date < o.order_estimated_delivery_date THEN 'Early'
     ELSE 'On Time'
   END AS delivery_status,
@@ -98,8 +98,8 @@ GROUP BY delivery_status;
 WITH delivery_times AS (
     SELECT
         order_id,
-        julianday(order_delivered_customer_date) - julianday(order_purchase_timestamp) AS actual_delivery_days,
-        julianday(order_estimated_delivery_date) - julianday(order_purchase_timestamp) AS estimated_delivery_days
+        DATEDIFF(day,order_purchase_timestamp,order_delivered_customer_date) AS actual_delivery_days,
+        DATEDIFF(day,order_purchase_timestamp,order_estimated_delivery_date) AS estimated_delivery_days
     FROM orders
     WHERE order_delivered_customer_date IS NOT NULL
       AND order_estimated_delivery_date IS NOT NULL
